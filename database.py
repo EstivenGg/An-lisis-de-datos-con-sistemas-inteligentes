@@ -15,9 +15,7 @@ DB_PATH = Path(__file__).with_name("inventory.db")
 
 
 def _get_conn():
-    # check_same_thread=False permite que el mismo archivo sea usado por distintos hilos si aplica
     conn = sqlite3.connect(DB_PATH)
-    # Mejora integridad y rendimiento
     conn.execute("PRAGMA foreign_keys = ON;")
     conn.execute("PRAGMA journal_mode = WAL;")
     conn.execute("PRAGMA synchronous = NORMAL;")
@@ -36,7 +34,7 @@ def _table_exists(conn: sqlite3.Connection, table: str) -> bool:
 def _column_exists(conn: sqlite3.Connection, table: str, column: str) -> bool:
     with closing(conn.cursor()) as cur:
         cur.execute(f"PRAGMA table_info({table});")
-        cols = [row[1] for row in cur.fetchall()]  # row[1] = name
+        cols = [row[1] for row in cur.fetchall()] 
         return column in cols
 
 
@@ -54,7 +52,6 @@ def _create_schema(conn: sqlite3.Connection) -> None:
             );
             """
         )
-        # Índices útiles para consultas típicas
         cur.execute("CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos(nombre);")
         cur.execute("CREATE INDEX IF NOT EXISTS idx_productos_categoria ON productos(categoria);")
     conn.commit()

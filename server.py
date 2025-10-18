@@ -108,7 +108,7 @@ def listar_productos() -> Dict[str, Any]:
         filas = cur.fetchall()
     return {"productos": [_fila_a_dicc(f) for f in filas]}
 
-# --- Reporte en español ---
+
 @mcp.tool()
 def reporte_estado() -> Dict[str, Any]:
     with _get_conn() as conn, closing(conn.cursor()) as cur:
