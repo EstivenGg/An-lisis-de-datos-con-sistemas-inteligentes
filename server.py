@@ -1,23 +1,16 @@
 # server.py
 """
-Servidor MCP para Inventario con soporte de pH y reportes bilingües (ES/EN).
-
-Requisitos:
-  pip install fastmcp
-
-Ejecución:
-  python server.py
+Servidor MCP para Inventario con soporte de pH y reportes en español.
 """
 
 import sqlite3
 from contextlib import closing
 from pathlib import Path
-from typing import Dict, Any, Optional, Literal
+from typing import Dict, Any, Optional
 from mcp.server.fastmcp import FastMCP
 
 from database import init_db
 
-# --- Configuración de base de datos ---
 DB_PATH = Path(__file__).with_name("inventory.db")
 
 def _get_conn() -> sqlite3.Connection:
@@ -25,33 +18,23 @@ def _get_conn() -> sqlite3.Connection:
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
-# Inicializar la base de datos (crea tabla si no existe)
+# Inicializar la base de datos
 init_db()
 
-# --- Servidor MCP ---
 mcp = FastMCP("InventarioDB")
 
-# --- Funciones auxiliares ---
+# --- Auxiliares ---
 RANGO_IDEAL_PH = (5.5, 6.5)
 
 def _clasificar_ph(ph: Optional[float]) -> str:
     if ph is None:
-        return "desconocido"
+        return "Desconocido (sin dato de pH)"
     bajo, alto = RANGO_IDEAL_PH
     if ph < bajo:
-        return "bajo"
+        return "Bajo (ácido)"
     if ph > alto:
-        return "alto"
-    return "óptimo"
-
-def _traducir_estado(estado: str, idioma: Literal["es", "en"]) -> str:
-    tabla = {
-        "óptimo": {"es": "Óptimo (dentro del rango)", "en": "Optimal (within range)"},
-        "bajo": {"es": "Bajo (ácido)", "en": "Low (acidic)"},
-        "alto": {"es": "Alto (alcalino)", "en": "High (alkaline)"},
-        "desconocido": {"es": "Desconocido (sin dato de pH)", "en": "Unknown (no pH data)"},
-    }
-    return tabla[estado][idioma]
+        return "Alto (alcalino)"
+    return "Óptimo (dentro del rango)"
 
 def _fila_a_dicc(fila: tuple) -> Dict[str, Any]:
     return {
@@ -63,10 +46,9 @@ def _fila_a_dicc(fila: tuple) -> Dict[str, Any]:
         "ph": fila[5],
     }
 
-# --- Herramientas CRUD ---
+# --- CRUD ---
 @mcp.tool()
 def crear_producto(nombre: str, categoria: str, cantidad: int, precio: float, ph: Optional[float] = None) -> Dict[str, Any]:
-    """Crea un producto en el inventario con soporte de pH."""
     with _get_conn() as conn, closing(conn.cursor()) as cur:
         cur.execute(
             "INSERT INTO productos (nombre, categoria, cantidad, precio, ph) VALUES (?, ?, ?, ?, ?)",
@@ -80,7 +62,6 @@ def crear_producto(nombre: str, categoria: str, cantidad: int, precio: float, ph
 
 @mcp.tool()
 def consultar_producto(id: int) -> Dict[str, Any]:
-    """Consulta un producto por su ID."""
     with _get_conn() as conn, closing(conn.cursor()) as cur:
         cur.execute("SELECT * FROM productos WHERE id = ?", (id,))
         fila = cur.fetchone()
@@ -90,7 +71,6 @@ def consultar_producto(id: int) -> Dict[str, Any]:
 
 @mcp.tool()
 def actualizar_producto(id: int, cantidad: Optional[int] = None, ph: Optional[float] = None) -> Dict[str, Any]:
-    """Actualiza cantidad o pH de un producto existente."""
     campos = []
     valores = []
     if cantidad is not None:
@@ -101,7 +81,6 @@ def actualizar_producto(id: int, cantidad: Optional[int] = None, ph: Optional[fl
         valores.append(ph)
     if not campos:
         return {"mensaje": "Nada que actualizar"}
-
     valores.append(id)
     with _get_conn() as conn, closing(conn.cursor()) as cur:
         cur.execute(f"UPDATE productos SET {', '.join(campos)} WHERE id = ?", valores)
@@ -114,7 +93,6 @@ def actualizar_producto(id: int, cantidad: Optional[int] = None, ph: Optional[fl
 
 @mcp.tool()
 def eliminar_producto(id: int) -> Dict[str, Any]:
-    """Elimina un producto por ID."""
     with _get_conn() as conn, closing(conn.cursor()) as cur:
         cur.execute("DELETE FROM productos WHERE id = ?", (id,))
         afectados = cur.rowcount
@@ -125,16 +103,14 @@ def eliminar_producto(id: int) -> Dict[str, Any]:
 
 @mcp.tool()
 def listar_productos() -> Dict[str, Any]:
-    """Lista todos los productos del inventario."""
     with _get_conn() as conn, closing(conn.cursor()) as cur:
         cur.execute("SELECT * FROM productos")
         filas = cur.fetchall()
     return {"productos": [_fila_a_dicc(f) for f in filas]}
 
-# --- Reporte del estado del invernadero ---
+# --- Reporte en español ---
 @mcp.tool()
-def reporte_estado(idioma: Literal["es", "en"] = "es") -> Dict[str, Any]:
-    """Genera un reporte del estado del invernadero según pH en español o inglés."""
+def reporte_estado() -> Dict[str, Any]:
     with _get_conn() as conn, closing(conn.cursor()) as cur:
         cur.execute("SELECT * FROM productos")
         filas = cur.fetchall()
@@ -142,8 +118,7 @@ def reporte_estado(idioma: Literal["es", "en"] = "es") -> Dict[str, Any]:
     items = []
     for f in filas:
         item = _fila_a_dicc(f)
-        estado = _clasificar_ph(item["ph"])
-        item["estado"] = _traducir_estado(estado, idioma)
+        item["estado"] = _clasificar_ph(item["ph"])
         items.append(item)
 
     return {
@@ -154,20 +129,5 @@ def reporte_estado(idioma: Literal["es", "en"] = "es") -> Dict[str, Any]:
         "productos": items,
     }
 
-# --- Recursos ---
-@mcp.resource("productos://listado")
-def recurso_listado() -> Dict[str, Any]:
-    return listar_productos()
-
-@mcp.resource("reporte://estado-es")
-def recurso_reporte_es() -> Dict[str, Any]:
-    return reporte_estado(idioma="es")
-
-@mcp.resource("reporte://estado-en")
-def recurso_reporte_en() -> Dict[str, Any]:
-    return reporte_estado(idioma="en")
-
-# --- Arranque del servidor ---
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("server:mcp", host="127.0.0.1", port=8000, reload=True)
+    print(f"Base de datos: {DB_PATH.resolve()}")

@@ -1,25 +1,25 @@
 # Análisis de datos con sistemas inteligentes
 
 Este proyecto corresponde a la Actividad 6 – Sistemas Cognitivos basados en Big Data.  
-Implementa un servidor MCP (Multi-Command Protocol) en Python con operaciones CRUD sobre una base de datos SQLite para gestionar un inventario agrícola.  
+Implementa un servidor MCP en Python con operaciones CRUD sobre una base de datos SQLite para gestionar un inventario agrícola.  
 
-Se agregó la variable pH como parámetro clave en los productos del invernadero y se generaron reportes bilingües (español/inglés) que clasifican el estado de cada producto según su nivel de pH.  
+Se agregó la variable pH como parámetro clave en los productos del invernadero y se generó un reporte en español que clasifica el estado de cada producto según su nivel de pH.  
 
 ## Características
 - CRUD completo sobre productos (crear, consultar, actualizar, eliminar).  
 - Base de datos SQLite (inventory.db).  
 - Variable pH integrada para control del invernadero.  
-- Reportes bilingües (ES/EN) sobre el estado de los productos.  
+- Reporte del estado del invernadero en español.  
 - Scripts de prueba incluidos.  
 
 ## Estructura del proyecto
 ```
 mcp_crud_inventory/
 ├── database.py         # Inicialización de la base de datos
-├── server.py           # Servidor MCP con CRUD y reporte cognitivo
+├── server.py           # Servidor MCP con CRUD y reporte
 ├── test_carga.py       # Script para cargar productos de ejemplo
 ├── test_operaciones.py # Pruebas de consulta, actualización y eliminación
-├── test_reporte.py     # Generación de reportes en español e inglés
+├── test_reporte.py     # Generación de reporte en español
 └── inventory.db        # Base de datos (se crea automáticamente)
 ```
 
@@ -39,48 +39,71 @@ mcp_crud_inventory/
    ```bash
    python -m venv venv
    source venv/bin/activate  # Linux/Mac
-   venv\Scripts\activate     # Windows
+   venv\Scripts\activate   # Windows
    ```
 
 3. Instalar dependencias:
    ```bash
-   pip install fastmcp uvicorn
+   pip install fastmcp
    ```
 
 ## Ejecución de pruebas
-1. Cargar productos de ejemplo:
-   ```bash
-   python test_carga.py
-   ```
-2. Probar operaciones CRUD:
-   ```bash
-   python test_operaciones.py
-   ```
-3. Generar reporte bilingüe:
-   ```bash
-   python test_reporte.py
-   ```
 
-## Ejemplo de reporte
-
-Reporte en español (ES):
-```json
-{
-  "resumen": {"total_productos": 4, "rango_ideal": [5.5, 6.5]},
-  "productos": [
-    {"id": 1, "nombre": "Tomate", "estado": "Óptimo (dentro del rango)", "ph": 6.2}
-  ]
-}
+### 1. Cargar productos de ejemplo
+```bash
+python test_carga.py
 ```
 
-Reporte en inglés (EN):
-```json
-{
-  "summary": {"total_products": 4, "ideal_range": [5.5, 6.5]},
-  "products": [
-    {"id": 1, "name": "Tomato", "state": "Optimal (within range)", "ph": 6.2}
-  ]
-}
+**Salida esperada:**
+```
+=== Creación de productos ===
+{'id': 1, 'nombre': 'Tomate', 'categoria': 'Hortalizas', 'cantidad': 50, 'precio': 1.2, 'ph': 6.2}
+{'id': 2, 'nombre': 'Lechuga', 'categoria': 'Hortalizas', 'cantidad': 80, 'precio': 0.9, 'ph': 5.6}
+{'id': 3, 'nombre': 'Fresa', 'categoria': 'Frutas', 'cantidad': 40, 'precio': 2.5, 'ph': 3.5}
+{'id': 4, 'nombre': 'Pepino', 'categoria': 'Hortalizas', 'cantidad': 60, 'precio': 1.1, 'ph': 7.0}
+{'id': 5, 'nombre': 'Arándano', 'categoria': 'Frutas', 'cantidad': 30, 'precio': 3.2, 'ph': 5.9}
+
+=== Listado total ===
+{'id': 1, 'nombre': 'Tomate', 'categoria': 'Hortalizas', 'cantidad': 50, 'precio': 1.2, 'ph': 6.2}
+{'id': 2, 'nombre': 'Lechuga', 'categoria': 'Hortalizas', 'cantidad': 80, 'precio': 0.9, 'ph': 5.6}
+{'id': 3, 'nombre': 'Fresa', 'categoria': 'Frutas', 'cantidad': 40, 'precio': 2.5, 'ph': 3.5}
+{'id': 4, 'nombre': 'Pepino', 'categoria': 'Hortalizas', 'cantidad': 60, 'precio': 1.1, 'ph': 7.0}
+{'id': 5, 'nombre': 'Arándano', 'categoria': 'Frutas', 'cantidad': 30, 'precio': 3.2, 'ph': 5.9}
+```
+
+### 2. Operaciones CRUD
+```bash
+python test_operaciones.py
+```
+
+**Salida esperada:**
+```
+=== Consultar producto ===
+{'id': 1, 'nombre': 'Tomate', 'categoria': 'Hortalizas', 'cantidad': 50, 'precio': 1.2, 'ph': 6.2}
+
+=== Actualizar producto ===
+{'mensaje': 'Producto actualizado correctamente', 'producto': {'id': 1, 'nombre': 'Tomate', 'categoria': 'Hortalizas', 'cantidad': 100, 'precio': 1.2, 'ph': 6.0}}
+
+=== Eliminar producto ===
+{'mensaje': 'Producto eliminado correctamente', 'id': 5}
+
+=== Listado final ===
+{'productos': [{'id': 1, 'nombre': 'Tomate', 'categoria': 'Hortalizas', 'cantidad': 100, 'precio': 1.2, 'ph': 6.0}, {'id': 2, 'nombre': 'Lechuga', 'categoria': 'Hortalizas', 'cantidad': 80, 'precio': 0.9, 'ph': 5.6}, {'id': 3, 'nombre': 'Fresa', 'categoria': 'Frutas', 'cantidad': 40, 'precio': 2.5, 'ph': 3.5}, {'id': 4, 'nombre': 'Pepino', 'categoria': 'Hortalizas', 'cantidad': 60, 'precio': 1.1, 'ph': 7.0}]}
+```
+
+### 3. Generar reporte
+```bash
+python test_reporte.py
+```
+
+**Salida esperada:**
+```
+=== Reporte del invernadero (ES) ===
+{'total_productos': 4, 'rango_ideal': (5.5, 6.5)}
+{'id': 1, 'nombre': 'Tomate', 'categoria': 'Hortalizas', 'cantidad': 100, 'precio': 1.2, 'ph': 6.0, 'estado': 'Óptimo (dentro del rango)'}
+{'id': 2, 'nombre': 'Lechuga', 'categoria': 'Hortalizas', 'cantidad': 80, 'precio': 0.9, 'ph': 5.6, 'estado': 'Óptimo (dentro del rango)'}
+{'id': 3, 'nombre': 'Fresa', 'categoria': 'Frutas', 'cantidad': 40, 'precio': 2.5, 'ph': 3.5, 'estado': 'Bajo (ácido)'}
+{'id': 4, 'nombre': 'Pepino', 'categoria': 'Hortalizas', 'cantidad': 60, 'precio': 1.1, 'ph': 7.0, 'estado': 'Alto (alcalino)'}
 ```
 
 ## Referencias

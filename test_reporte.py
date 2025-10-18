@@ -8,13 +8,6 @@ def main():
     print(rep_es["resumen"])
     for it in rep_es["productos"]:
         print(it)
-
-    # Reporte en inglés
-    print("\n=== Greenhouse Report (EN) ===")
-    rep_en = reporte_estado(idioma="en")
-    print(rep_en["resumen"])
-    for it in rep_en["productos"]:
-        print(it)
-
+        
 if __name__ == "__main__":
     main()
